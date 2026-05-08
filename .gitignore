@@ -1,0 +1,44 @@
+# ==========================================
+# NEXUS-ABSA .gitignore
+# ==========================================
+
+# 1. Python & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 2. Virtual Environments
+venv/
+env/
+.venv/
+.env
+
+# 3. Jupyter Notebooks & Kaggle
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# 4. Deep Learning & Large Assets (CRITICAL)
+# جلوگیری از آپلود مدل‌های سنگین و دیتاست‌های فشرده
+*.zip
+*.tar.gz
+1_offline_prep/nexus_absa_assets/
+2_kaggle_workspace/models/
+*.bin
+*.pt
+*.safetensors
+*.h5
+
+# 5. Logs & Dynamic Results
+# جلوگیری از آپلود لاگ‌های در حال تغییر
+absa_experiment_logs.txt
+qualitative_analysis.txt
+# در صورت نیاز به آپلود نتایج نهایی، می‌توانید خط زیر را پاک کنید:
+absa_final_results.json
+
+# 6. IDEs & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

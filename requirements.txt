@@ -1,0 +1,31 @@
+# ==========================================
+# NEXUS-ABSA Requirements
+# ==========================================
+
+# --- Core Deep Learning & NLP ---
+torch>=2.0.0
+transformers>=4.38.0
+datasets>=2.16.0
+accelerate>=0.27.0       # Essential for Multi-GPU (Dual T4) training
+
+# --- Tokenization Dependencies ---
+sentencepiece            # Required for DeBERTa-v3 tokenizer
+tiktoken                 # Required for Qwen2 tokenizer
+
+# --- Metrics & Mathematics ---
+scikit-learn>=1.2.0
+numpy>=1.24.0
+
+# --- Text Processing (XAI & Symbolic Modules) ---
+nltk>=3.8.1
+
+# --- Utilities ---
+tqdm>=4.65.0
+huggingface_hub
+
+# ==========================================
+# Offline Preparation ONLY (Google Colab)
+# (These are NOT needed during Kaggle Training)
+# ==========================================
+requests                 # For ConceptNet API calls
+senticnet                # For building the SenticNet cache
