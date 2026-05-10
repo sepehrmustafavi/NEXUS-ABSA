@@ -34,9 +34,10 @@ def get_unique_words_from_absa():
     stop_words = set(stopwords.words('english'))
     unique_words = set()
     
+    # 1. بارگذاری SemEval با اضافه کردن دسترسی امنیتی (trust_remote_code)
     logging.info("Loading SemEval-2014 Dataset...")
     try:
-        semeval = load_dataset("jakartaresearch/semeval-absa")
+        semeval = load_dataset("jakartaresearch/semeval-absa", trust_remote_code=True)
         for split in semeval.keys():
             for item in semeval[split]:
                 text = item.get('text', '')
@@ -45,16 +46,28 @@ def get_unique_words_from_absa():
     except Exception as e:
         logging.warning(f"Failed to load SemEval: {e}")
 
-    logging.info("Loading MAMS Dataset...")
+    logging.info("Loading MAMS Dataset directly from Source XML...")
     try:
-        mams = load_dataset("qiaojin/MAMS", "atsa") 
-        for split in mams.keys():
-            for item in mams[split]:
-                text = item.get('text', item.get('sentence', ''))
-                words = nltk.word_tokenize(re.sub(r'[^\w\s]', '', str(text).lower()))
-                unique_words.update([w for w in words if w.isalpha() and w not in stop_words])
+        import urllib.request
+        import xml.etree.ElementTree as ET
+        
+        urls = [
+            "https://raw.githubusercontent.com/siat-nlp/MAMS-for-ABSA/master/data/MAMS-ATSA/raw/train.xml",
+            "https://raw.githubusercontent.com/siat-nlp/MAMS-for-ABSA/master/data/MAMS-ATSA/raw/val.xml",
+            "https://raw.githubusercontent.com/siat-nlp/MAMS-for-ABSA/master/data/MAMS-ATSA/raw/test.xml"
+        ]
+        
+        for url in urls:
+            req = urllib.request.urlopen(url)
+            tree = ET.parse(req)
+            root = tree.getroot()
+            for sentence in root.findall('sentence'):
+                text = sentence.find('text').text
+                if text:
+                    words = nltk.word_tokenize(re.sub(r'[^\w\s]', '', str(text).lower()))
+                    unique_words.update([w for w in words if w.isalpha() and w not in stop_words])
     except Exception as e:
-        logging.warning(f"Failed to load MAMS: {e}")
+        logging.warning(f"Failed to load MAMS from XML: {e}")
 
     logging.info(f"Total unique words extracted from ABSA datasets: {len(unique_words)}")
     return list(unique_words)
@@ -75,7 +88,6 @@ def build_senticnet_cache(words):
     logging.info(f"SenticNet Cache saved! ({len(cache)} words)")
 
 def build_conceptnet_cache(words):
-    """کوئری زدن به ConceptNet با رعایت Rate Limit و ساخت فایل کش"""
     logging.info("Building ConceptNet Cache (Requires API Calls)...")
     
     if os.path.exists(CONCEPTNET_CACHE_PATH):
@@ -102,7 +114,7 @@ def build_conceptnet_cache(words):
                 if edges:
                     weights = [e['weight'] for e in edges]
                     raw_score = np.mean(weights)
-                    score = float(np.tanh(raw_score / 5.0)) # نرمال‌سازی Tanh
+                    score = float(np.tanh(raw_score / 5.0)) 
                     found = True
             elif response.status_code == 429:
                 logging.warning("Rate limit hit! Sleeping for 5 seconds...")

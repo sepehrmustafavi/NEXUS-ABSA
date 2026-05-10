@@ -17,20 +17,13 @@ class NeuroSymbolicDataset(Dataset):
     def _prepare_data(self, dataset_name, data_split):
         for item in data_split:
             if "mams" in dataset_name.lower():
-                text = str(item.get('text', item.get('sentence', '')))
-                aspect = str(item.get('aspect_term', ''))
-                label = int(item.get('polarity', 0)) 
-
+                self.samples.append(item)
             elif "semeval" in dataset_name.lower():
-                text = str(item.get('text', ''))
-                aspect = str(item.get('aspect', ''))
-                label = int(item.get('sentiment', 0))
-
-            self.samples.append({
-                'text': text,
-                'aspect': aspect,
-                'label': label
-            })
+                self.samples.append({
+                    'text': str(item.get('text', '')),
+                    'aspect': str(item.get('aspect', '')),
+                    'label': int(item.get('sentiment', 0))
+                })
 
     def __len__(self):
         return len(self.samples)
@@ -80,13 +73,31 @@ def get_dataloaders(config, tokenizer, sym_module, knowledge_type, dataset_name)
     logging.info(f"Loading ABSA dataset: {dataset_name}...")
     
     if dataset_name == "mams":
-        dataset = load_dataset("qiaojin/MAMS", "atsa")
-        train_split = dataset['train']
-        val_split = dataset['validation']
+        import urllib.request
+        import xml.etree.ElementTree as ET
+        
+        def parse_mams_xml(url):
+            req = urllib.request.urlopen(url)
+            tree = ET.parse(req)
+            root = tree.getroot()
+            data = []
+            for sentence in root.findall('sentence'):
+                text = sentence.find('text').text
+                aspect_terms = sentence.find('aspectTerms')
+                if aspect_terms is not None:
+                    for aspect in aspect_terms.findall('aspectTerm'):
+                        term = aspect.get('term')
+                        polarity = aspect.get('polarity')
+                        pol_int = 0 if polarity == 'negative' else 1 if polarity == 'neutral' else 2
+                        data.append({'text': text, 'aspect': term, 'label': pol_int})
+            return data
+            
+        train_split = parse_mams_xml("https://raw.githubusercontent.com/siat-nlp/MAMS-for-ABSA/master/data/MAMS-ATSA/raw/train.xml")
+        val_split = parse_mams_xml("https://raw.githubusercontent.com/siat-nlp/MAMS-for-ABSA/master/data/MAMS-ATSA/raw/val.xml")
         max_len = config.MAX_LEN_MAMS
         
     elif dataset_name == "semeval":
-        dataset = load_dataset("jakartaresearch/semeval-absa")
+        dataset = load_dataset("jakartaresearch/semeval-absa", trust_remote_code=True)
         train_split = dataset['train']
         val_split = dataset['validation'] if 'validation' in dataset else dataset['test']
         max_len = config.MAX_LEN_SEMEVAL
