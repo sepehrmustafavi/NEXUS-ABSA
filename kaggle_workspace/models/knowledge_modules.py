@@ -6,7 +6,6 @@ import numpy as np
 import nltk
 from nltk.corpus import stopwords
 
-# دانلود منابع پایه‌ای NLTK به صورت خاموش
 try:
     nltk.download('stopwords', quiet=True)
     nltk.download('punkt', quiet=True)
@@ -14,10 +13,7 @@ except:
     pass
 
 class SymbolicModuleSenticNet:
-    """
-    نسخه آفلاین و کش‌شده برای SenticNet.
-    بدون نیاز به نصب کتابخانه سنگین senticnet، قطبیت کلمات را از فایل JSON می‌خواند.
-    """
+    
     def __init__(self, cache_path):
         self.cache_path = cache_path
         self.cache = self._load_cache()
@@ -36,11 +32,9 @@ class SymbolicModuleSenticNet:
         return {}
 
     def get_text_polarity(self, text):
-        """محاسبه میانگین قطبیت کلمات یافت‌شده در جمله"""
         if not self.cache:
             return 0.0, []
             
-        # پیش‌پردازش متن
         text = re.sub(r'[^\w\s]', '', str(text))
         words = re.findall(r'\b\w+\b', text.lower())
         
@@ -48,7 +42,6 @@ class SymbolicModuleSenticNet:
         found_keywords = []
         
         for word in words:
-            # جستجوی کلمه در کش با سرعت O(1)
             if word in self.cache:
                 item = self.cache[word]
                 if item.get('found', False):
@@ -59,16 +52,12 @@ class SymbolicModuleSenticNet:
         if count == 0:
             return 0.0, []
         
-        # کلیپ کردن میانگین قطبیت بین -1 و 1
         avg_polarity = np.clip(polarity_sum / count, -1.0, 1.0)
         return float(avg_polarity), list(set(found_keywords))
 
 
 class ConceptNetModule:
-    """
-    نسخه کاملاً آفلاین ConceptNet.
-    درخواست‌های API (requests.get) حذف شده‌اند تا از توقف آموزش در کگل جلوگیری شود.
-    """
+    
     def __init__(self, cache_path):
         self.cache_path = cache_path
         try:
@@ -92,7 +81,6 @@ class ConceptNetModule:
         return {}
 
     def get_keywords_from_text(self, text):
-        """استخراج کلمات کلیدی با حذف Stop Words"""
         text = re.sub(r'[^\w\s]', '', str(text))
         try:
             words = nltk.word_tokenize(text.lower())
@@ -102,7 +90,6 @@ class ConceptNetModule:
         return list(set([w for w in words if w.isalpha() and w not in self.stop_words]))
 
     def get_concept_score(self, word):
-        """بازگرداندن امتیاز کلمه از فایل کش (بدون Fallback به API)"""
         if word in self.cache:
             item = self.cache[word]
             if item.get('found', False):

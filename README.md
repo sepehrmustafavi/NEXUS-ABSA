@@ -6,7 +6,7 @@
 ![Status](https://img.shields.io/badge/Status-Research_Ready-success.svg)
 
 ## 📌 Introduction
-**NEXUS-ABSA** is a lightweight, explainable, and architecture-agnostic Neuro-Symbolic framework tailored for **Aspect-Based Sentiment Analysis (ABSA)**. This project investigates the architectural disparities between Encoders (e.g., DeBERTa, RoBERTa) and Decoders (e.g., Qwen2) in handling fine-grained sentiment dependencies. 
+**NEXUS-ABSA** is a lightweight, explainable, and architecture-agnostic Neuro-Symbolic framework tailored for **Aspect-Based Sentiment Analysis (ABSA)**. This project investigates the architectural disparities between Encoders (e.g., DeBERTa, RoBERTa) and Decoders (e.g., Qwen3.5) in handling fine-grained sentiment dependencies. 
 
 By leveraging the **Flexible TADA (Task-Aware Domain Adaptation)** strategy, NEXUS seamlessly injects symbolic knowledge (SenticNet / ConceptNet) into the neural backbone while updating **less than 20%** of the total parameters. This repository is specifically optimized for resource-constrained environments, featuring a full offline execution pipeline and multi-GPU distributed training via Hugging Face `Accelerate` on **Kaggle (2x T4 GPUs)**.
 
@@ -21,7 +21,7 @@ By leveraging the **Flexible TADA (Task-Aware Domain Adaptation)** strategy, NEX
 
 ---
 
-## 📂 Repository Structure (ساختار پروژه)
+## 📂 Repository Structure
 
 ```text
 NEXUS-ABSA/
