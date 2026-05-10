@@ -32,16 +32,18 @@ class NeuroSymbolicEncoder(NeuroSymbolicBase):
             inputs['token_type_ids'] = token_type_ids
 
         outputs = self.backbone(**inputs)
-        
         cls_output = outputs.last_hidden_state[:, 0, :]
         return self.forward_head(cls_output, symbolic_features)
 
 
 class NeuroSymbolicCausalLM(NeuroSymbolicBase):
-    """ معماری برای مدل‌های دیکدری خودهمبسته (Qwen2, GPT) """
     def __init__(self, model_name, n_classes=3):
         super().__init__(model_name, n_classes)
-        self.backbone = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+        self.backbone = AutoModel.from_pretrained(
+            model_name, 
+            trust_remote_code=True,
+            torch_dtype=torch.float16
+        )
 
     def forward(self, input_ids, attention_mask, symbolic_features, **kwargs):
         outputs = self.backbone(input_ids=input_ids, attention_mask=attention_mask)
@@ -57,12 +59,10 @@ class NeuroSymbolicCausalLM(NeuroSymbolicBase):
         batch_indices = torch.arange(batch_size, device=input_ids.device)
         
         last_token_features = hidden_states[batch_indices, seq_lengths, :]
-        
         return self.forward_head(last_token_features, symbolic_features)
 
 
 def apply_tada(model, arch_type, strategy):
-    
     logging.info(f"Configuring TADA: {strategy.upper()} for Architecture: {arch_type}")
     
     for param in model.parameters():
@@ -76,8 +76,6 @@ def apply_tada(model, arch_type, strategy):
     if input_embeddings:
         for param in input_embeddings.parameters():
             param.requires_grad = True
-    else:
-        logging.warning("Could not find input embeddings layer to unfreeze.")
 
     if strategy == 'flexible':
         last_layer = None
@@ -85,7 +83,10 @@ def apply_tada(model, arch_type, strategy):
             if arch_type in ['roberta', 'deberta']:
                 last_layer = backbone.encoder.layer[-1]
             elif arch_type == 'qwen2':
-                last_layer = backbone.model.layers[-1]
+                if hasattr(backbone, 'model') and hasattr(backbone.model, 'layers'):
+                    last_layer = backbone.model.layers[-1]
+                elif hasattr(backbone, 'layers'):
+                    last_layer = backbone.layers[-1]
             
             if last_layer:
                 for param in last_layer.parameters():
